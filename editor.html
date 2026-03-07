@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CVGenPro G_S_R — Sécurisé</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,900;1,700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --brand-purple: #8b5cf6;
+            --brand-pink: #d946ef;
+            --bg-main: #fcfdff;
+            --error: #ef4444;
+        }
+
+        body { 
+            background: var(--bg-main); 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            color: #1e293b; 
+            min-height: 100vh;
+        }
+
+        /* --- Scrollbars --- */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* --- UI Components --- */
+        .glass { 
+            background: rgba(255, 255, 255, 0.9); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255, 255, 255, 0.7); 
+            border-radius: 1.5rem; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        }
+
+        .btn-grad {
+            background: linear-gradient(90deg, var(--brand-purple), var(--brand-pink));
+            color: white;
+            font-weight: 800;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 20px -5px rgba(139, 92, 246, 0.4);
+        }
+        .btn-grad:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        .btn-grad:disabled { filter: grayscale(1); cursor: not-allowed; transform: none; }
+
+        .input-pro {
+            border: 1.5px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 12px 16px;
+            width: 100%;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .input-pro:focus { border-color: var(--brand-purple); outline: none; box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1); }
+        .input-error { border-color: var(--error) !important; background-color: #fffafb; }
+        .required-star { color: var(--error); margin-left: 2px; }
+
+        /* --- Viewport Settings --- */
+        #viewport-container {
+            height: calc(100vh - 140px);
+            background: #e2e8f0;
+            border-radius: 2.5rem;
+            display: flex;
+            justify-content: center;
+            overflow-y: auto;
+            padding: 40px;
+            border: 3px solid white;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        #cv-paper {
+            width: 210mm;
+            min-height: 297mm;
+            background: white;
+            transform: scale(0.65);
+            transform-origin: top center;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.15);
+        }
+
+        .archive-card {
+            background: white;
+            border: 1px solid #f1f5f9;
+            padding: 12px;
+            border-radius: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            transition: 0.3s;
+        }
+        .archive-card:hover { border-color: var(--brand-purple); background: #fdfcff; }
+
+        .photo-circle {
+            width: 130px; height: 130px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 4px solid white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: flex; align-items: center; justify-content: center;
+            background: #f8fafc;
+        }
+        .photo-circle img { width: 100%; height: 100%; object-fit: cover; }
+
+        #full-preview {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.98);
+            z-index: 9999;
+            backdrop-filter: blur(15px);
+            padding: 40px;
+            overflow-y: auto;
+            flex-direction: column;
+            align-items: center;
+        }
+        #full-preview.active { display: flex; }
+
+        .section-label { font-weight: 900; font-size: 10px; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 1rem; display: block; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+<nav class="flex justify-between items-center mb-8 glass p-5">
+    <div class="flex items-center gap-4">
+        <div class="w-12 h-12 btn-grad flex items-center justify-center rounded-2xl">
+            <i data-lucide="layers-2"></i>
+        </div>
+        <div>
+            <span class="text-2xl font-black tracking-tighter block leading-none">CVGen<span class="text-purple-600">Pro</span></span>
+            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Multi-Save Edition G_S_R</p>
+        </div>
+    </div>
+    
+    <div class="flex gap-4 items-center">
+        <button onclick="toggleFullView()" class="px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-slate-50 transition shadow-sm">
+            <i data-lucide="maximize" class="w-4"></i>
+        </button>
+        
+        <button onclick="handleExport()" class="btn-grad px-6 py-3 rounded-xl text-sm uppercase tracking-widest shadow-lg">
+            PDF
+        </button>
+
+        <button onclick="handleLogout()" class="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all border border-red-100" title="Déconnexion">
+            <i data-lucide="log-out" class="w-5 h-5"></i>
+        </button>
+    </div>
+</nav>
+
+<div class="grid lg:grid-cols-12 gap-10">
+    
+    <div class="lg:col-span-4 h-[calc(100vh-140px)] overflow-y-auto pr-4 space-y-6">
+        
+        <div class="glass p-6 border-2 border-purple-100">
+            <span class="section-label text-purple-600">Gestion des Archives</span>
+            <div class="flex gap-2 mb-6">
+                <input type="text" id="project-name" placeholder="Nom du CV (ex: CV Tech)" class="input-pro font-bold">
+                <button onclick="saveToArchives()" class="btn-grad px-4 rounded-xl" title="Sauvegarder"><i data-lucide="save"></i></button>
+            </div>
+            <div id="archives-list" class="max-h-40 overflow-y-auto">
+                <p class="text-[11px] text-slate-400 text-center italic">Aucun CV sauvegardé pour le moment.</p>
+            </div>
+        </div>
+
+        <div class="glass p-6">
+            <span class="section-label text-orange-500">Identité & Style (Obligatoire)</span>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <select id="cv-template" class="input-pro font-black text-xs col-span-2 bg-slate-50">
+                    <option value="modern">1. Sidebar Pro (Classique)</option>
+                    <option value="bento">2. Bento Dashboard (Apple)</option>
+                    <option value="luxury">3. Luxury Serif (Premium)</option>
+                    <option value="terminal">4. Dev Terminal (Hacker)</option>
+                    <option value="executive">5. Executive (Épuré)</option>
+                    <option value="minimal">6. Minimalist Chic (Vogue)</option>
+                </select>
+                <input type="color" id="theme-color" value="#8b5cf6" class="w-full h-12 rounded-xl cursor-pointer">
+                <div class="flex items-center gap-2">
+                    <input type="file" id="photo-file" class="hidden">
+                    <label for="photo-file" class="cursor-pointer w-full h-12 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center text-[10px] font-bold text-slate-400 hover:border-purple-400 transition">
+                        PHOTO +
+                    </label>
+                </div>
+            </div>
+            <div class="space-y-3">
+                <div class="relative">
+                    <input type="text" id="full-name" placeholder="Nom complet *" class="input-pro font-black">
+                </div>
+                <div class="relative">
+                    <input type="text" id="target-job" placeholder="Poste visé *" class="input-pro">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="relative">
+                        <input type="email" id="user-email" placeholder="Email *" class="input-pro text-xs">
+                    </div>
+                    <div class="relative">
+                        <input type="text" id="user-phone" placeholder="77... *" class="input-pro text-xs" maxlength="14">
+                    </div>
+                </div>
+                <textarea id="user-bio" placeholder="Résumé de carrière..." class="input-pro h-24 resize-none text-xs"></textarea>
+            </div>
+        </div>
+
+        <div class="glass p-6">
+            <div class="flex justify-between items-center mb-6">
+                <span class="section-label text-pink-500 m-0">Expériences</span>
+                <button onclick="addListEntry('exp')" class="w-8 h-8 btn-grad flex items-center justify-center rounded-lg"><i data-lucide="plus"></i></button>
+            </div>
+            <div id="exp-list" class="space-y-4"></div>
+        </div>
+
+        <div class="glass p-6">
+            <div class="flex justify-between items-center mb-6">
+                <span class="section-label text-blue-500 m-0">Formation</span>
+                <button onclick="addListEntry('edu')" class="w-8 h-8 btn-grad flex items-center justify-center rounded-lg"><i data-lucide="plus"></i></button>
+            </div>
+            <div id="edu-list" class="space-y-4"></div>
+        </div>
+
+        <div class="glass p-6">
+            <span class="section-label text-green-500">Langues & Compétences</span>
+            <input type="text" id="user-skills" placeholder="Skills (ex: Figma, React, Excel)" class="input-pro mb-4">
+            <div id="lang-list" class="space-y-2"></div>
+            <button onclick="addListEntry('lang')" class="w-full mt-3 py-2 border-2 border-dashed border-slate-200 rounded-xl text-[10px] font-black uppercase text-slate-400 hover:bg-slate-50">+ Langue</button>
+        </div>
+    </div>
+
+    <div class="lg:col-span-8">
+        <div id="viewport-container">
+            <div id="cv-paper"></div>
+        </div>
+    </div>
+</div>
+
+<div id="full-preview">
+    <div class="w-full max-w-5xl flex justify-between items-center mb-8">
+        <h2 class="text-white text-3xl font-black tracking-tighter italic">VÉRIFICATION FINALE</h2>
+        <button onclick="toggleFullView()" class="p-3 bg-white/10 text-white rounded-full hover:bg-red-500 transition">
+            <i data-lucide="x" class="w-8 h-8"></i>
+        </button>
+    </div>
+    <div id="preview-target"></div>
+</div>
+
+<script>
+    /* --- CONFIGURATION & REGEX --- */
+    const SN_PHONE_REGEX = /^(?:\+221|00221)?(7[0678]|33)\d{7}$/;
+    const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    let currentData = {
+        photo: null,
+        exp: [{t: "Responsable Marketing", c: "Agence Pulse", d: "Gestion de campagnes."}],
+        edu: [{t: "Master Digital", c: "BEM Dakar", d: "Spécialisation Data."}],
+        lang: [{n: "Français", l: "Maternel"}, {n: "Anglais", l: "B2"}]
+    };
+
+    let archives = JSON.parse(localStorage.getItem('cv_archives')) || [];
+
+    $(document).ready(() => {
+        refreshArchivesUI();
+        renderAll();
+        lucide.createIcons();
+    });
+
+    /* --- GESTION DE LA DÉCONNEXION --- */
+    function handleLogout() {
+        Swal.fire({
+            title: 'Souhaitez-vous quitter ?',
+            text: "Vous allez être redirigé vers l'accueil.",
+            icon: 'warning',
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonColor: '#8b5cf6',
+            denyButtonColor: '#ef4444',
+            confirmButtonText: 'Quitter',
+            denyButtonText: 'Effacer les archives et Quitter',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = 'index.html';
+            } else if (result.isDenied) {
+                localStorage.removeItem('cv_archives');
+                window.location.href = 'index.html';
+            }
+        });
+    }
+
+    /* --- VALIDATION ENGINE --- */
+    function validateInputs() {
+        let errors = [];
+        $('.input-pro').removeClass('input-error');
+
+        const fields = {
+            'full-name': "Nom complet",
+            'target-job': "Poste visé",
+            'user-email': "Email",
+            'user-phone': "Téléphone"
+        };
+
+        for (let id in fields) {
+            if (!$(`#${id}`).val().trim()) {
+                $(`#${id}`).addClass('input-error');
+                errors.push(`Le champ <b>${fields[id]}</b> est obligatoire.`);
+            }
+        }
+
+        const email = $('#user-email').val().trim();
+        if (email && !EMAIL_REGEX.test(email)) {
+            $('#user-email').addClass('input-error');
+            errors.push("Le format de l'<b>Email</b> est invalide.");
+        }
+
+        const phone = $('#user-phone').val().trim().replace(/\s+/g, '');
+        if (phone && !SN_PHONE_REGEX.test(phone)) {
+            $('#user-phone').addClass('input-error');
+            errors.push("Numéro <b>Sénégalais</b> invalide.");
+        }
+
+        if (errors.length > 0) {
+            Swal.fire({
+                title: 'Champs incorrects',
+                html: `<div class="text-left text-sm text-red-600">${errors.join('<br>')}</div>`,
+                icon: 'error',
+                confirmButtonColor: '#8b5cf6'
+            });
+            return false;
+        }
+        return true;
+    }
+
+    /* --- ARCHIVE LOGIC --- */
+    function saveToArchives() {
+        if (!validateInputs()) return;
+        
+        const projName = $('#project-name').val();
+        if(!projName) {
+            $(`#project-name`).addClass('input-error');
+            Swal.fire('Projet sans nom', 'Donnez un nom à cette sauvegarde.', 'warning');
+            return;
+        }
+
+        const snapshot = {
+            id: Date.now(),
+            projectName: projName,
+            timestamp: new Date().toLocaleDateString('fr-FR', {hour: '2-digit', minute:'2-digit'}),
+            content: {
+                name: $('#full-name').val(),
+                job: $('#target-job').val(),
+                email: $('#user-email').val(),
+                phone: $('#user-phone').val(),
+                bio: $('#user-bio').val(),
+                skills: $('#user-skills').val(),
+                tmpl: $('#cv-template').val(),
+                color: $('#theme-color').val(),
+                photo: currentData.photo,
+                exp: [...currentData.exp],
+                edu: [...currentData.edu],
+                lang: [...currentData.lang]
+            }
+        };
+
+        archives.push(snapshot);
+        localStorage.setItem('cv_archives', JSON.stringify(archives));
+        refreshArchivesUI();
+        Swal.fire({ title: 'Succès !', text: 'CV archivé localement.', icon: 'success', timer: 2000, showConfirmButton: false });
+    }
+
+    function loadFromArchive(id) {
+        const target = archives.find(a => a.id === id);
+        if(!target) return;
+        const c = target.content;
+        $('#project-name').val(target.projectName);
+        $('#full-name').val(c.name);
+        $('#target-job').val(c.job);
+        $('#user-email').val(c.email);
+        $('#user-phone').val(c.phone);
+        $('#user-bio').val(c.bio);
+        $('#user-skills').val(c.skills);
+        $('#cv-template').val(c.tmpl);
+        $('#theme-color').val(c.color);
+        currentData.photo = c.photo;
+        currentData.exp = c.exp;
+        currentData.edu = c.edu;
+        currentData.lang = c.lang;
+        renderAll();
+        Swal.fire({ title: 'Restauration réussie', icon: 'info', toast: true, position: 'top-end', timer: 2000 });
+    }
+
+    function deleteArchive(id) {
+        Swal.fire({
+            title: 'Supprimer ?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            confirmButtonText: 'Oui, effacer'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                archives = archives.filter(a => a.id !== id);
+                localStorage.setItem('cv_archives', JSON.stringify(archives));
+                refreshArchivesUI();
+            }
+        });
+    }
+
+    function refreshArchivesUI() {
+        const list = $('#archives-list').empty();
+        if(archives.length === 0) {
+            list.append('<p class="text-[11px] text-slate-400 text-center italic">Aucun CV sauvegardé.</p>');
+            return;
+        }
+        archives.forEach(a => {
+            list.append(`
+                <div class="archive-card">
+                    <div class="overflow-hidden">
+                        <p class="text-xs font-black text-slate-700 truncate">${a.projectName}</p>
+                        <p class="text-[9px] text-slate-400 font-bold uppercase">${a.timestamp}</p>
+                    </div>
+                    <div class="flex gap-1 shrink-0 ml-2">
+                        <button onclick="loadFromArchive(${a.id})" class="p-2 text-purple-600 hover:bg-purple-50 rounded-lg"><i data-lucide="folder-open" class="w-4 h-4"></i></button>
+                        <button onclick="deleteArchive(${a.id})" class="p-2 text-red-400 hover:bg-red-50 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+            `);
+        });
+        lucide.createIcons();
+    }
+
+    /* --- FORM HANDLING --- */
+    function addListEntry(type) {
+        if(type === 'lang') currentData.lang.push({n: "Langue", l: "Niveau"});
+        else currentData[type].push({t: "Nouveau titre", c: "Organisation", d: "Description..."});
+        renderAll();
+    }
+
+    function removeListEntry(type, idx) {
+        currentData[type].splice(idx, 1);
+        renderAll();
+    }
+
+    function updateEntryValue(type, idx, field, val) {
+        currentData[type][idx][field] = val;
+        renderCV();
+    }
+
+    function renderInputLists() {
+        ['exp', 'edu'].forEach(type => {
+            const list = $(`#${type}-list`).empty();
+            currentData[type].forEach((item, i) => {
+                list.append(`
+                    <div class="p-4 bg-slate-50 rounded-2xl relative group border border-slate-100">
+                        <input oninput="updateEntryValue('${type}', ${i}, 't', this.value)" value="${item.t}" class="font-black text-xs w-full bg-transparent border-none p-0 focus:ring-0 mb-1">
+                        <input oninput="updateEntryValue('${type}', ${i}, 'c', this.value)" value="${item.c}" class="text-[10px] text-purple-500 w-full bg-transparent border-none p-0 focus:ring-0 mb-2 font-bold uppercase tracking-wider">
+                        <textarea oninput="updateEntryValue('${type}', ${i}, 'd', this.value)" class="text-[11px] text-slate-400 w-full bg-transparent border-none p-0 focus:ring-0 h-12 resize-none leading-relaxed">${item.d}</textarea>
+                        <button onclick="removeListEntry('${type}', ${i})" class="absolute top-2 right-2 text-red-300 opacity-0 group-hover:opacity-100 transition">&times;</button>
+                    </div>
+                `);
+            });
+        });
+
+        const lList = $('#lang-list').empty();
+        currentData.lang.forEach((l, i) => {
+            lList.append(`
+                <div class="flex gap-2 items-center group">
+                    <input oninput="updateEntryValue('lang', ${i}, 'n', this.value)" value="${l.n}" class="input-pro py-2 text-xs font-bold">
+                    <input oninput="updateEntryValue('lang', ${i}, 'l', this.value)" value="${l.l}" class="input-pro py-2 text-xs text-purple-600 font-black">
+                    <button onclick="removeListEntry('lang', ${i})" class="text-red-300 opacity-0 group-hover:opacity-100 transition"><i data-lucide="x" class="w-4 h-4"></i></button>
+                </div>
+            `);
+        });
+        lucide.createIcons();
+    }
+
+    /* --- RENDERING CORE --- */
+    function renderCV() {
+        const tmpl = $('#cv-template').val();
+        const accent = $('#theme-color').val();
+        const skills = $('#user-skills').val().split(',').map(s => s.trim()).filter(s => s !== "");
+        const profile = {
+            name: $('#full-name').val() || "VOTRE NOM",
+            job: $('#target-job').val() || "VOTRE MÉTIER",
+            email: $('#user-email').val() || "email@exemple.com",
+            phone: $('#user-phone').val() || "77 000 00 00",
+            bio: $('#user-bio').val() || "Décrivez votre parcours..."
+        };
+
+        const pCircle = `<div class="photo-circle mx-auto mb-6">${currentData.photo ? `<img src="${currentData.photo}">` : `<i data-lucide="user" class="text-slate-200 w-12 h-12"></i>`}</div>`;
+
+        let html = "";
+        if(tmpl === 'bento') {
+            html = `
+                <div class="p-8 bg-[#f1f5f9] h-full grid grid-cols-12 gap-4">
+                    <div class="col-span-8 bg-white p-10 rounded-[3rem] shadow-sm flex items-center gap-8">
+                        <div class="w-32 h-32 rounded-3xl overflow-hidden shadow-2xl">${currentData.photo ? `<img src="${currentData.photo}" class="w-full h-full object-cover">` : '<div class="w-full h-full bg-slate-100"></div>'}</div>
+                        <div><h1 class="text-4xl font-black tracking-tighter">${profile.name}</h1><p class="text-xl font-bold" style="color:${accent}">${profile.job}</p></div>
+                    </div>
+                    <div class="col-span-4 bg-slate-900 text-white p-8 rounded-[3rem] flex flex-col justify-center">
+                        <p class="text-xs font-bold mb-2 truncate">${profile.email}</p><p class="text-xs font-bold opacity-50">${profile.phone}</p>
+                    </div>
+                    <div class="col-span-7 bg-white p-8 rounded-[3rem] shadow-sm">
+                        <h4 class="text-[10px] font-black uppercase tracking-widest opacity-20 mb-6">Parcours</h4>
+                        <div class="space-y-6">${currentData.exp.map(e => `<div><p class="font-bold text-sm text-slate-800">${e.t}</p><p class="text-[10px] font-black uppercase mb-1" style="color:${accent}">${e.c}</p><p class="text-[11px] text-slate-400">${e.d}</p></div>`).join('')}</div>
+                    </div>
+                    <div class="col-span-5 space-y-4">
+                        <div class="bg-indigo-50 p-8 rounded-[3rem] border border-indigo-100 flex-1">
+                            <h4 class="text-[10px] font-black uppercase text-indigo-900 mb-6">Expertise</h4>
+                            <div class="flex flex-wrap gap-2">${skills.map(s => `<span class="px-3 py-1 bg-white rounded-lg text-[9px] font-black text-indigo-600 shadow-sm">${s}</span>`).join('')}</div>
+                        </div>
+                    </div>
+                </div>`;
+        } else if(tmpl === 'terminal') {
+            html = `<div class="bg-[#0d1117] h-full p-16 text-[#e6edf3] font-mono text-xs"><p class="text-green-400 mb-10">// PROFILE_DUMP: ${profile.name}</p><div class="ml-4 mb-10"><p><span class="text-pink-400">export const</span> <span class="text-blue-400">User</span> = { role: "${profile.job}", contact: "${profile.email}" }</p></div><p class="text-green-400 mb-6">/* EXPERIENCES */</p>${currentData.exp.map(e => `<div class="ml-4 mb-6"><p class="text-purple-400">function ${e.t.replace(/\s+/g,'')}() { return "${e.c}"; }</p></div>`).join('')}</div>`;
+        } else {
+            html = `
+                <div class="flex h-full w-full">
+                    <div class="w-[35%] p-12 text-white" style="background:${accent}">
+                        ${pCircle}
+                        <h2 class="text-2xl font-black uppercase text-center mb-10 leading-tight">${profile.name}</h2>
+                        <p class="text-[11px] font-bold opacity-80 uppercase tracking-widest break-words mb-4">${profile.email}</p>
+                        <p class="text-[11px] font-bold opacity-80 uppercase tracking-widest">${profile.phone}</p>
+                    </div>
+                    <div class="flex-1 p-16 bg-white">
+                        <section class="mb-12"><h4 class="text-xs font-black uppercase tracking-[5px] mb-6" style="color:${accent}">Profil</h4><p class="text-sm text-slate-500 leading-relaxed">${profile.bio}</p></section>
+                        <section><h4 class="text-xs font-black uppercase tracking-[5px] mb-8" style="color:${accent}">Expériences</h4><div class="space-y-8">${currentData.exp.map(e => `<div class="border-l-4 pl-6" style="border-color:${accent}15"><p class="font-black text-sm uppercase">${e.t}</p><p class="text-[10px] font-bold text-slate-300 uppercase mb-3">${e.c}</p><p class="text-xs text-slate-400 leading-relaxed">${e.d}</p></div>`).join('')}</div></section>
+                    </div>
+                </div>`;
+        }
+
+        $('#cv-paper').html(html);
+        lucide.createIcons();
+    }
+
+    function renderAll() {
+        renderInputLists();
+        renderCV();
+    }
+
+    /* --- UI ACTIONS --- */
+    function toggleFullView() {
+        if(!$('#full-preview').hasClass('active')) {
+            $('#preview-target').html($('#cv-paper').clone().css('transform', 'scale(1)'));
+            $('#full-preview').addClass('active');
+        } else {
+            $('#full-preview').removeClass('active');
+        }
+        lucide.createIcons();
+    }
+
+    function handleExport() {
+        if(validateInputs()) {
+            const element = document.getElementById('cv-paper');
+            const fileName = $('#full-name').val().replace(/\s+/g, '_') || 'Mon_CV';
+            const opt = { margin: 0, filename: `CV_${fileName}.pdf`, html2canvas: { scale: 3, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+            
+            Swal.fire({ title: 'Génération...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                Swal.fire({ title: 'Succès !', text: 'CV téléchargé.', icon: 'success', timer: 2000 });
+            });
+        }
+    }
+
+    $(document).on('input', 'input, textarea, select', function() {
+        $(this).removeClass('input-error');
+        renderCV();
+    });
+
+    $('#photo-file').on('change', function(e) {
+        const reader = new FileReader();
+        reader.onload = (ev) => { currentData.photo = ev.target.result; renderCV(); };
+        reader.readAsDataURL(e.target.files[0]);
+    });
+</script>
+</body>
+</html>
