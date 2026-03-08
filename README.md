@@ -66,7 +66,7 @@ CV_DYNAMIQUE_2/
 
 **Problème 1 :** Difficulté à se coordonner sur les tâches.
 
-**Solution :** Nous avons mis en place des réunions régulières sur Discord et utilisé un tableau Trello.
+**Solution :** Nous avons mis en place des réunions régulières sur Meet et Whatshapp afin de trouver des solutions
 
 **Problème 2 :** Les CV n'étaient pas sauvegardés quand on cliquait sur le bouton.
 
