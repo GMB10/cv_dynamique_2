@@ -30,17 +30,16 @@ CV_DYNAMIQUE_2/
 - **HTML/CSS/JavaScript** : Pour l'interface
 
 
-## 👥 Répartition des tâches
+## Répartition des tâches
 
 ### Équipe de développement
 
 | Membre | Rôle | Tâches réalisées |
 |--------|------|------------------|
-| **Serigne** | Développeur Backend & Base de données | - Création de la base de données (MySQL) ET Développement des API login, register et logout - Configuration de db.php
+| **Serigne Saliou GAYE** | Développeur Backend & Base de données | - Création de la base de données (MySQL)<br> ET Développement des API login, register et logout<br>- Configuration de db.php |
+| **Ramatoulaye BARRY** | Développeuse Frontend | - Création des pages HTML (index.html, inscription.html)<br> ET Intégration des templates de CV (img/)<br>- Design CSS et mise en page |
+| **Ghislain Maweibena BANABAKO-BASSA** | Développeur Full Stack | - Développement des API save_cv.php et get_user_cv.php<br> ET Création et intégration de editor.html<br>- Configuration de api/config.php<br>- Scripts JavaScript (script.js)<br>- Liaison entre le frontend et le backend |
 
-| **Rama** | Développeuse Frontend | - Création des pages HTML (index.html, inscription.html) ET Intégration des templates de CV (img/) - Design CSS et mise en page
-
-| **Ghislain** | Développeur Full Stack | - Développement des API save_cv.php et get_user_cv.php - Création et intégration de editor.html - Configuration de api/config.php - Liaison entre le frontend et le backend  Scripts JavaScript (script.js)
 
 
 ### Répartition détaillée par fichier
