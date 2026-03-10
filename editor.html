@@ -26,6 +26,10 @@
         #full-preview { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); z-index: 9999; backdrop-filter: blur(10px); padding: 20px; overflow-y: auto; flex-direction: column; align-items: center; }
         #full-preview.active { display: flex; }
         .section-label { font-weight: 800; font-size: 10px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1rem; display: block; }
+        
+        /* Bouton Logout Style */
+        .btn-logout { background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; transition: 0.3s; }
+        .btn-logout:hover { background: #ef4444; color: white; transform: scale(1.05); }
     </style>
 </head>
 <body class="p-4 md:p-6">
@@ -33,12 +37,18 @@
 <nav class="flex justify-between items-center mb-6 glass p-4">
     <div class="flex items-center gap-3">
         <div class="w-10 h-10 btn-grad flex items-center justify-center rounded-xl"><i data-lucide="zap"></i></div>
-        <span class="text-xl font-black tracking-tight">CVGen<span class="text-purple-600">Pro</span></span>
+        <div>
+            <span class="text-xl font-black tracking-tight block leading-none">CVGen<span class="text-purple-600">Pro</span></span>
+            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">G_S_R Engine</span>
+        </div>
     </div>
     <div class="flex gap-3 items-center">
-        <button onclick="toggleFullView()" class="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm"><i data-lucide="maximize" class="w-4"></i></button>
+        <button onclick="toggleFullView()" class="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition shadow-sm"><i data-lucide="maximize" class="w-4"></i></button>
         <button onclick="handleExport()" class="btn-grad px-6 py-3 rounded-xl text-sm shadow-lg">PDF EXPORT</button>
-        <button onclick="handleLogout()" class="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all border border-red-100 shadow-sm"><i data-lucide="log-out" class="w-5 h-5"></i></button>
+        <div class="h-8 w-[1px] bg-slate-200 mx-2"></div>
+        <button onclick="handleLogout()" class="btn-logout p-3 rounded-xl shadow-sm flex items-center justify-center">
+            <i data-lucide="log-out" class="w-5 h-5"></i>
+        </button>
     </div>
 </nav>
 
@@ -117,7 +127,7 @@
 
 <div id="full-preview">
     <div class="w-full max-w-4xl flex justify-between items-center mb-6 text-white">
-        <span class="font-black text-xl tracking-widest uppercase">G_S_R High-Fidelity Preview</span>
+        <span class="font-black text-xl tracking-widest">G_S_R PREVIEW MODE</span>
         <button onclick="toggleFullView()" class="p-2 bg-white/10 rounded-full hover:bg-red-500"><i data-lucide="x"></i></button>
     </div>
     <div id="preview-target"></div>
@@ -126,15 +136,15 @@
 <script>
     let currentData = {
         photo: null,
-        exp: [{t: "Product Designer", c: "Innovate Dakar", d: "Conception d'interfaces innovantes."}],
-        edu: [{t: "Master Design", c: "Polytech Dakar", d: ""}],
-        lang: [{n: "Français", l: "Maternel"}]
+        exp: [{t: "Sénior Product Designer", c: "Innovate Studio", d: "Direction artistique et gestion d'une équipe de 4 juniors."}],
+        edu: [{t: "Master Design Global", c: "École Boulle Paris", d: ""}],
+        lang: [{n: "Anglais", l: "C1 - Courant"}]
     };
     let archives = JSON.parse(localStorage.getItem('cv_archives')) || [];
 
     $(document).ready(() => { refreshArchivesUI(); renderAll(); lucide.createIcons(); });
 
-    // --- LOGIQUE DE VALIDATION G_S_R ---
+    // --- VALIDATION G_S_R ---
     function validateForm() {
         let errors = [];
         $('.input-pro').removeClass('input-error');
@@ -143,13 +153,13 @@
             '#project-name': "Nom du fichier",
             '#full-name': "Nom complet",
             '#target-job': "Poste visé",
-            '#user-bio': "Bio/Résumé"
+            '#user-bio': "Introduction/Bio"
         };
 
         for (let id in required) {
             if (!$(id).val().trim()) {
                 $(id).addClass('input-error');
-                errors.push(`Le champ "${required[id]}" est requis.`);
+                errors.push(`Le champ "${required[id]}" est vide.`);
             }
         }
 
@@ -163,14 +173,14 @@
         const phoneVal = $('#user-phone').val().replace(/\s+/g, '');
         if (!snPhoneRegex.test(phoneVal)) {
             $('#user-phone').addClass('input-error');
-            errors.push("Le numéro doit être au format Sénégal (77, 78, 76, 70, 33).");
+            errors.push("Le numéro de téléphone n'est pas au format Sénégalais valide (ex: 77XXXXXXX).");
         }
 
         if (errors.length > 0) {
             Swal.fire({
                 icon: 'error',
-                title: 'Oups ! Erreur de saisie',
-                html: `<div class="text-left text-sm space-y-1">${errors.map(e => `• ${e}`).join('<br>')}</div>`,
+                title: 'Données manquantes',
+                html: `<div class="text-left text-xs">${errors.map(e => `• ${e}`).join('<br>')}</div>`,
                 confirmButtonColor: '#8b5cf6'
             });
             return false;
@@ -178,12 +188,31 @@
         return true;
     }
 
+    // --- LOGOUT ---
+    function handleLogout() {
+        Swal.fire({
+            title: 'Déconnexion ?',
+            text: "Assurez-vous d'avoir sauvegardé votre projet.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: 'Oui, quitter',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Redirection vers index.html avec l'ID de la section d'authentification
+                window.location.href = "index.html#auth-section";
+            }
+        });
+    }
+
+    // --- GESTION LISTES ---
     function addListEntry(type) {
         if(type === 'lang') currentData.lang.push({n: "Langue", l: "Niveau"});
         else currentData[type].push({t: "Titre", c: "Lieu", d: "Description..."});
         renderAll();
     }
-
     function removeListEntry(type, idx) { currentData[type].splice(idx, 1); renderAll(); }
     function updateEntryValue(type, idx, field, val) { currentData[type][idx][field] = val; renderCV(); }
 
@@ -191,53 +220,53 @@
         ['exp', 'edu'].forEach(type => {
             const list = $(`#${type}-list`).empty();
             currentData[type].forEach((item, i) => {
-                list.append(`
-                    <div class="p-3 bg-slate-50 rounded-xl relative border border-slate-100">
-                        <input oninput="updateEntryValue('${type}', ${i}, 't', this.value)" value="${item.t}" class="font-bold text-xs w-full bg-transparent border-none p-0 focus:ring-0">
-                        <input oninput="updateEntryValue('${type}', ${i}, 'c', this.value)" value="${item.c}" class="text-[10px] text-purple-600 w-full bg-transparent border-none p-0 focus:ring-0 uppercase font-bold">
-                        <textarea oninput="updateEntryValue('${type}', ${i}, 'd', this.value)" class="text-[11px] text-slate-400 w-full bg-transparent border-none p-0 focus:ring-0 h-10 resize-none">${item.d}</textarea>
-                        <button onclick="removeListEntry('${type}', ${i})" class="absolute top-2 right-2 text-slate-300 hover:text-red-500">&times;</button>
-                    </div>`);
+                list.append(`<div class="p-3 bg-slate-50 rounded-xl relative border border-slate-100">
+                    <input oninput="updateEntryValue('${type}', ${i}, 't', this.value)" value="${item.t}" class="font-bold text-xs w-full bg-transparent border-none p-0">
+                    <input oninput="updateEntryValue('${type}', ${i}, 'c', this.value)" value="${item.c}" class="text-[10px] text-purple-600 w-full bg-transparent border-none p-0 uppercase font-bold">
+                    <textarea oninput="updateEntryValue('${type}', ${i}, 'd', this.value)" class="text-[11px] text-slate-400 w-full bg-transparent border-none p-0 h-10 resize-none">${item.d}</textarea>
+                    <button onclick="removeListEntry('${type}', ${i})" class="absolute top-2 right-2 text-slate-300 hover:text-red-500">×</button>
+                </div>`);
             });
         });
         const lList = $('#lang-list').empty();
         currentData.lang.forEach((l, i) => {
-            lList.append(`
-                <div class="flex gap-2 items-center">
-                    <input oninput="updateEntryValue('lang', ${i}, 'n', this.value)" value="${l.n}" class="input-pro py-1 text-xs font-bold">
-                    <input oninput="updateEntryValue('lang', ${i}, 'l', this.value)" value="${l.l}" class="input-pro py-1 text-xs text-slate-500">
-                    <button onclick="removeListEntry('lang', ${i})" class="text-red-300">×</button>
-                </div>`);
+            lList.append(`<div class="flex gap-2 items-center">
+                <input oninput="updateEntryValue('lang', ${i}, 'n', this.value)" value="${l.n}" class="input-pro py-1 text-xs font-bold">
+                <input oninput="updateEntryValue('lang', ${i}, 'l', this.value)" value="${l.l}" class="input-pro py-1 text-xs text-slate-500">
+                <button onclick="removeListEntry('lang', ${i})" class="text-red-300">×</button>
+            </div>`);
         });
     }
 
+    // --- MODÈLES CV ---
     function renderCV() {
         const tmpl = $('#cv-template').val();
         const accent = $('#theme-color').val();
         const skills = ($('#user-skills').val() || "").split(',').filter(s => s.trim() !== "");
         const profile = {
             name: $('#full-name').val() || "VOTRE NOM",
-            job: $('#target-job').val() || "VOTRE POSTE",
-            email: $('#user-email').val() || "email@domaine.com",
+            job: $('#target-job').val() || "INTITULÉ DU POSTE",
+            email: $('#user-email').val() || "contact@email.com",
             phone: $('#user-phone').val() || "77 000 00 00",
-            bio: $('#user-bio').val() || "Présentation ici..."
+            bio: $('#user-bio').val() || "Présentez-vous ici..."
         };
         const imgTag = currentData.photo ? `<img src="${currentData.photo}" class="w-full h-full object-cover">` : `<div class="w-full h-full bg-slate-200 flex items-center justify-center text-slate-400"><i data-lucide="user"></i></div>`;
-        
+
         let html = "";
         if(tmpl === 'modern') {
-            html = `<div class="flex h-full"><div class="w-1/3 p-10 text-white" style="background:${accent}"><div class="w-32 h-32 mx-auto rounded-2xl overflow-hidden mb-6 shadow-xl">${imgTag}</div><h2 class="text-2xl font-black text-center mb-10">${profile.name}</h2><div class="space-y-4 text-[10px] mb-10 uppercase tracking-widest font-bold opacity-80"><p>${profile.email}</p><p>${profile.phone}</p></div><div class="mb-10"><h4 class="text-xs font-black border-b border-white/20 pb-2 mb-4 uppercase">Skills</h4><div class="flex flex-wrap gap-2">${skills.map(s => `<span class="bg-white/10 px-2 py-1 rounded text-[9px] font-bold">${s}</span>`).join('')}</div></div><div><h4 class="text-xs font-black border-b border-white/20 pb-2 mb-4 uppercase">Langues</h4>${currentData.lang.map(l => `<p class="text-[10px] mb-1"><b>${l.n}</b> - ${l.l}</p>`).join('')}</div></div><div class="flex-1 p-12 bg-white space-y-8"><section><h3 class="text-xs font-black tracking-[4px] mb-4 uppercase" style="color:${accent}">Profil</h3><p class="text-sm text-slate-500 leading-relaxed">${profile.bio}</p></section><section><h3 class="text-xs font-black tracking-[4px] mb-4 uppercase" style="color:${accent}">Expériences</h3><div class="space-y-6">${currentData.exp.map(e => `<div class="border-l-2 pl-4" style="border-color:${accent}40"><p class="text-sm font-black">${e.t}</p><p class="text-[10px] font-bold text-slate-300 uppercase">${e.c}</p><p class="text-xs text-slate-500 mt-2">${e.d}</p></div>`).join('')}</div></section><section><h3 class="text-xs font-black tracking-[4px] mb-4 uppercase" style="color:${accent}">Formation</h3><div class="space-y-4">${currentData.edu.map(e => `<div><p class="text-sm font-black">${e.t}</p><p class="text-xs text-slate-400 font-bold uppercase">${e.c}</p></div>`).join('')}</div></section></div></div>`;
+            html = `<div class="flex h-full"><div class="w-1/3 p-10 text-white" style="background:${accent}"><div class="w-32 h-32 mx-auto rounded-2xl overflow-hidden mb-6 shadow-xl">${imgTag}</div><h2 class="text-2xl font-black text-center mb-10">${profile.name}</h2><div class="space-y-4 text-[10px] mb-10 uppercase tracking-widest font-bold opacity-80"><p>${profile.email}</p><p>${profile.phone}</p></div><div class="mb-10"><h4 class="text-xs font-black border-b border-white/20 pb-2 mb-4 uppercase">Skills</h4><div class="flex flex-wrap gap-2">${skills.map(s => `<span class="bg-white/10 px-2 py-1 rounded text-[9px] font-bold">${s}</span>`).join('')}</div></div><div><h4 class="text-xs font-black border-b border-white/20 pb-2 mb-4 uppercase">Langues</h4>${currentData.lang.map(l => `<p class="text-[10px] mb-1"><b>${l.n}</b> - ${l.l}</p>`).join('')}</div></div><div class="flex-1 p-12 bg-white space-y-8"><section><h3 class="text-xs font-black tracking-[4px] mb-4 uppercase" style="color:${accent}">Profil</h3><p class="text-sm text-slate-500 leading-relaxed">${profile.bio}</p></section><section><h3 class="text-xs font-black tracking-[4px] mb-4 uppercase" style="color:${accent}">Expériences</h3><div class="space-y-6">${currentData.exp.map(e => `<div class="border-l-2 pl-4" style="border-color:${accent}40"><p class="text-sm font-black">${e.t}</p><p class="text-[10px] font-bold text-slate-300 uppercase">${e.c}</p><p class="text-xs text-slate-500 mt-2">${e.d}</p></div>`).join('')}</div></section><section><h3 class="text-xs font-black tracking-[4px] mb-4 uppercase" style="color:${accent}">Éducation</h3><div class="space-y-4">${currentData.edu.map(e => `<div><p class="text-sm font-black">${e.t}</p><p class="text-xs text-slate-400 font-bold uppercase">${e.c}</p></div>`).join('')}</div></section></div></div>`;
         } else if(tmpl === 'bento') {
             html = `<div class="p-8 bg-slate-100 h-full grid grid-cols-12 gap-4"><div class="col-span-8 bg-white p-8 rounded-[2rem] shadow-sm flex items-center gap-6"><div class="w-24 h-24 rounded-3xl overflow-hidden shrink-0 shadow-lg">${imgTag}</div><div><h1 class="text-3xl font-black">${profile.name}</h1><p class="text-lg font-bold" style="color:${accent}">${profile.job}</p></div></div><div class="col-span-4 bg-slate-900 text-white p-8 rounded-[2rem] flex flex-col justify-center"><p class="text-[11px] font-bold opacity-50 uppercase tracking-widest">${profile.email}</p><p class="text-[11px] font-bold opacity-50 uppercase tracking-widest">${profile.phone}</p></div><div class="col-span-7 bg-white p-8 rounded-[2rem] shadow-sm space-y-8"><div><h4 class="text-[10px] font-black uppercase tracking-widest text-slate-300 mb-6">Parcours</h4><div class="space-y-6">${currentData.exp.map(e => `<div><p class="text-xs font-black">${e.t}</p><p class="text-[10px] font-black uppercase mb-1" style="color:${accent}">${e.c}</p><p class="text-[10px] text-slate-400">${e.d}</p></div>`).join('')}</div></div><div><h4 class="text-[10px] font-black uppercase tracking-widest text-slate-300 mb-6">Études</h4><div class="space-y-4">${currentData.edu.map(e => `<div><p class="text-xs font-bold">${e.t}</p><p class="text-[10px] font-black opacity-50 uppercase">${e.c}</p></div>`).join('')}</div></div></div><div class="col-span-5 flex flex-col gap-4"><div class="bg-indigo-50 p-8 rounded-[2rem] flex-1"><h4 class="text-[10px] font-black uppercase text-indigo-900 mb-6">Stack & Langues</h4><div class="flex flex-wrap gap-2 mb-8">${skills.map(s => `<span class="bg-white px-3 py-1 rounded-full text-[10px] font-black shadow-sm text-indigo-600">${s}</span>`).join('')}</div><div class="space-y-2">${currentData.lang.map(l => `<p class="text-[10px] font-bold">${l.n} <span class="text-indigo-300">/ ${l.l}</span></p>`).join('')}</div></div></div></div>`;
         } else if(tmpl === 'swiss') {
-            html = `<div class="h-full bg-white p-16 font-sans"><div class="grid grid-cols-12 border-t-8 border-black pt-10"><div class="col-span-8"><h1 class="text-6xl font-black uppercase leading-[0.8] mb-4">${profile.name}</h1><p class="text-2xl font-light tracking-tighter text-slate-400 uppercase">${profile.job}</p></div><div class="col-span-4 text-right text-[11px] font-bold uppercase space-y-1"><p>${profile.email}</p><p>${profile.phone}</p></div></div><div class="grid grid-cols-12 mt-20 gap-10"><div class="col-span-4"><span class="block h-1 bg-black w-8 mb-4"></span><h3 class="text-xs font-black uppercase mb-10">Expériences</h3></div><div class="col-span-8 space-y-10">${currentData.exp.map(e => `<div class="grid grid-cols-2 gap-4"><p class="text-sm font-black uppercase">${e.t} — <span class="font-normal text-slate-400">${e.c}</span></p><p class="text-xs text-slate-500">${e.d}</p></div>`).join('')}</div></div><div class="grid grid-cols-12 mt-20 gap-10"><div class="col-span-4"><span class="block h-1 bg-black w-8 mb-4"></span><h3 class="text-xs font-black uppercase">Compétences</h3></div><div class="col-span-8 flex flex-wrap gap-x-8 gap-y-2 text-sm font-black uppercase">${skills.map(s => `<span>${s}</span>`).join('')}</div></div></div>`;
+            html = `<div class="h-full bg-white p-16 font-sans"><div class="grid grid-cols-12 border-t-8 border-black pt-10"><div class="col-span-8"><h1 class="text-6xl font-black uppercase leading-[0.8] mb-4">${profile.name}</h1><p class="text-2xl font-light tracking-tighter text-slate-400 uppercase">${profile.job}</p></div><div class="col-span-4 text-right text-[11px] font-bold uppercase space-y-1"><p>${profile.email}</p><p>${profile.phone}</p></div></div><div class="grid grid-cols-12 mt-20 gap-10"><div class="col-span-4"><span class="block h-1 bg-black w-8 mb-4"></span><h3 class="text-xs font-black uppercase mb-10">Expériences</h3></div><div class="col-span-8 space-y-10">${currentData.exp.map(e => `<div class="grid grid-cols-2 gap-4"><p class="text-sm font-black uppercase">${e.t} — <span class="font-normal text-slate-400">${e.c}</span></p><p class="text-xs text-slate-500">${e.d}</p></div>`).join('')}</div></div></div>`;
         } else if(tmpl === 'neon') {
-            html = `<div class="h-full bg-[#050505] p-12 text-white font-['Space_Grotesk']"><div class="flex justify-between items-start mb-16 border-b border-white/10 pb-10"><div><h1 class="text-5xl font-black tracking-tighter mb-2 italic" style="text-shadow: 0 0 10px ${accent}">${profile.name}</h1><p class="text-xl font-bold uppercase opacity-50" style="color:${accent}">${profile.job}</p></div><div class="w-24 h-24 border-2 p-1 rounded-full" style="border-color:${accent}">${imgTag}</div></div><div class="grid grid-cols-3 gap-10"><div class="col-span-1 space-y-10"><div class="p-4 bg-white/5 rounded-2xl border-l-4" style="border-color:${accent}"><h3 class="text-xs font-black uppercase mb-4 text-slate-500">Stack</h3><div class="flex flex-wrap gap-2">${skills.map(s => `<span class="text-[10px] px-2 py-1 bg-white/10 rounded">${s}</span>`).join('')}</div></div><div class="p-4 bg-white/5 rounded-2xl border-l-4" style="border-color:${accent}"><h3 class="text-xs font-black uppercase mb-4 text-slate-500">Contact</h3><p class="text-[10px] break-all">${profile.email}</p><p class="text-[10px] mt-2">${profile.phone}</p></div></div><div class="col-span-2 space-y-8"><h3 class="text-[10px] font-black uppercase tracking-[4px]" style="color:${accent}">01. Expériences</h3><div class="space-y-6">${currentData.exp.map(e => `<div><p class="text-lg font-bold">${e.t}</p><p class="text-[10px] font-black uppercase opacity-40 mb-2">${e.c}</p><p class="text-xs text-slate-400 leading-relaxed">${e.d}</p></div>`).join('')}</div></div></div></div>`;
+            html = `<div class="h-full bg-[#050505] p-12 text-white font-['Space_Grotesk']"><div class="flex justify-between items-start mb-16 border-b border-white/10 pb-10"><div><h1 class="text-5xl font-black tracking-tighter mb-2 italic" style="text-shadow: 0 0 10px ${accent}">${profile.name}</h1><p class="text-xl font-bold uppercase opacity-50" style="color:${accent}">${profile.job}</p></div><div class="w-24 h-24 border-2 p-1 rounded-full" style="border-color:${accent}">${imgTag}</div></div><div class="grid grid-cols-3 gap-10"><div class="col-span-1 space-y-10"><div class="p-4 bg-white/5 rounded-2xl border-l-4" style="border-color:${accent}"><h3 class="text-xs font-black uppercase mb-4 text-slate-500">Stack</h3><div class="flex flex-wrap gap-2">${skills.map(s => `<span class="text-[10px] px-2 py-1 bg-white/10 rounded">${s}</span>`).join('')}</div></div></div><div class="col-span-2 space-y-8"><h3 class="text-[10px] font-black uppercase tracking-[4px]" style="color:${accent}">01. Expériences</h3><div class="space-y-6">${currentData.exp.map(e => `<div><p class="text-lg font-bold">${e.t}</p><p class="text-[10px] font-black uppercase opacity-40 mb-2">${e.c}</p><p class="text-xs text-slate-400 leading-relaxed">${e.d}</p></div>`).join('')}</div></div></div></div>`;
         } else if(tmpl === 'legacy') {
-            html = `<div class="h-full bg-[#fdfcf8] p-16 font-serif text-[#1a1a1a]"><div class="text-center border-b-2 border-black pb-8 mb-8"><h1 class="text-6xl font-black mb-4">${profile.name}</h1><div class="flex justify-center gap-10 text-[11px] font-sans font-black uppercase tracking-[2px]"><span>${profile.job}</span> <span>•</span> <span>${profile.email}</span> <span>•</span> <span>${profile.phone}</span></div></div><div class="columns-2 gap-12 font-sans text-xs leading-relaxed text-justify"><div class="mb-8"><p class="first-letter:text-5xl first-letter:font-black first-letter:float-left first-letter:mr-3 first-letter:mt-1">${profile.bio}</p></div><h3 class="font-black uppercase border-b border-black mb-4 text-sm">Parcours</h3>${currentData.exp.map(e => `<div class="mb-6"><p class="font-black italic text-[13px]">${e.t}</p><p class="font-bold uppercase text-[9px] mb-2">${e.c}</p><p>${e.d}</p></div>`).join('')}<h3 class="font-black uppercase border-b border-black mb-4 text-sm">Expertise</h3><div class="flex flex-wrap gap-4 mb-6 font-bold uppercase text-[10px]">${skills.map(s => `<span>${s}</span>`).join('')}</div><h3 class="font-black uppercase border-b border-black mb-4 text-sm">Formation</h3>${currentData.edu.map(e => `<div class="mb-4"><p class="font-bold">${e.t}</p><p class="italic text-[11px]">${e.c}</p></div>`).join('')}</div></div>`;
+            html = `<div class="h-full bg-[#fdfcf8] p-16 font-serif text-[#1a1a1a]"><div class="text-center border-b-2 border-black pb-8 mb-8"><h1 class="text-6xl font-black mb-4">${profile.name}</h1><div class="flex justify-center gap-10 text-[11px] font-sans font-black uppercase tracking-[2px]"><span>${profile.job}</span> <span>•</span> <span>${profile.email}</span> <span>•</span> <span>${profile.phone}</span></div></div><div class="columns-2 gap-12 font-sans text-xs leading-relaxed text-justify"><div class="mb-8"><p class="first-letter:text-5xl first-letter:font-black first-letter:float-left first-letter:mr-3 first-letter:mt-1">${profile.bio}</p></div><h3 class="font-black uppercase border-b border-black mb-4 text-sm">Parcours</h3>${currentData.exp.map(e => `<div class="mb-6"><p class="font-black italic text-[13px]">${e.t}</p><p class="font-bold uppercase text-[9px] mb-2">${e.c}</p><p>${e.d}</p></div>`).join('')}<h3 class="font-black uppercase border-b border-black mb-4 text-sm">Expertise</h3><div class="flex flex-wrap gap-4 mb-6 font-bold uppercase text-[10px]">${skills.map(s => `<span>${s}</span>`).join('')}</div></div></div>`;
         } else if(tmpl === 'tokyo') {
-            html = `<div class="h-full bg-white flex overflow-hidden"><div class="w-20 bg-black flex flex-col items-center py-10 gap-10 text-white"><div class="rotate-[-90deg] whitespace-nowrap font-black tracking-[10px] text-xs uppercase opacity-30 origin-center w-0">RESUME</div><div class="rotate-[-90deg] whitespace-nowrap font-black tracking-[10px] text-xs uppercase opacity-30 origin-center w-0 mt-40">2026</div></div><div class="flex-1 p-16 relative"><div class="absolute top-16 right-16 w-32 h-32 z-10 bg-slate-100 overflow-hidden" style="clip-path: polygon(20% 0, 100% 0, 80% 100%, 0 100%);">${imgTag}</div><h1 class="text-7xl font-black tracking-tighter leading-none mb-4">${profile.name.split(' ')[0]}<br><span style="color:${accent}">${profile.name.split(' ')[1] || ''}</span></h1><p class="text-xs font-black uppercase tracking-[8px] text-slate-400 mb-20">${profile.job}</p><div class="grid grid-cols-2 gap-16"><section><h4 class="text-[10px] font-black uppercase mb-6 flex items-center gap-2"><span class="w-8 h-[1px] bg-black"></span> Expériences</h4><div class="space-y-8">${currentData.exp.map(e => `<div><p class="font-black text-sm uppercase">${e.t}</p><p class="text-[10px] text-slate-400 font-bold mb-2 uppercase">${e.c}</p><p class="text-xs leading-loose">${e.d}</p></div>`).join('')}</div></section><section><h4 class="text-[10px] font-black uppercase mb-6 flex items-center gap-2"><span class="w-8 h-[1px] bg-black"></span> Skills</h4><div class="flex flex-wrap gap-2 mb-10">${skills.map(s => `<span class="border border-black px-2 py-1 text-[9px] font-black uppercase">${s}</span>`).join('')}</div><h4 class="text-[10px] font-black uppercase mb-6 flex items-center gap-2"><span class="w-8 h-[1px] bg-black"></span> Études</h4><div class="space-y-4">${currentData.edu.map(e => `<div><p class="text-xs font-black uppercase">${e.t}</p><p class="text-[10px] text-slate-400">${e.c}</p></div>`).join('')}</div></section></div></div></div>`;
+            html = `<div class="h-full bg-white flex overflow-hidden"><div class="w-20 bg-black flex flex-col items-center py-10 gap-10 text-white"><div class="rotate-[-90deg] whitespace-nowrap font-black tracking-[10px] text-xs uppercase opacity-30 origin-center w-0">RESUME</div></div><div class="flex-1 p-16 relative"><div class="absolute top-16 right-16 w-32 h-32 z-10 bg-slate-100 overflow-hidden" style="clip-path: polygon(20% 0, 100% 0, 80% 100%, 0 100%);">${imgTag}</div><h1 class="text-7xl font-black tracking-tighter leading-none mb-4">${profile.name.split(' ')[0]}<br><span style="color:${accent}">${profile.name.split(' ')[1] || ''}</span></h1><p class="text-xs font-black uppercase tracking-[8px] text-slate-400 mb-20">${profile.job}</p><div class="grid grid-cols-2 gap-16"><section><h4 class="text-[10px] font-black uppercase mb-6 flex items-center gap-2"><span class="w-8 h-[1px] bg-black"></span> Expériences</h4><div class="space-y-8">${currentData.exp.map(e => `<div><p class="font-black text-sm uppercase">${e.t}</p><p class="text-[10px] text-slate-400 font-bold mb-2 uppercase">${e.c}</p><p class="text-xs leading-loose">${e.d}</p></div>`).join('')}</div></section></div></div></div>`;
         }
+
         $('#cv-paper').html(html);
         lucide.createIcons();
     }
@@ -246,10 +275,10 @@
 
     function saveToArchives() {
         if (!validateForm()) return;
-        const name = $('#project-name').val();
+        const name = $('#project-name').val() || "CV_Temp";
         const snap = { id: Date.now(), projectName: name, content: { ...currentData, ui: { name: $('#full-name').val(), job: $('#target-job').val(), email: $('#user-email').val(), phone: $('#user-phone').val(), bio: $('#user-bio').val(), skills: $('#user-skills').val(), tmpl: $('#cv-template').val(), color: $('#theme-color').val() } } };
         archives.push(snap); localStorage.setItem('cv_archives', JSON.stringify(archives));
-        refreshArchivesUI(); Swal.fire('Sauvegardé', '', 'success');
+        refreshArchivesUI(); Swal.fire('Sauvegardé', 'Projet ajouté aux archives.', 'success');
     }
 
     function refreshArchivesUI() {
@@ -284,7 +313,6 @@
             $('#preview-target').html($('#cv-paper').clone().css({'transform': 'scale(1)', 'margin': '0 auto'}));
             $('#full-preview').addClass('active');
         } else { $('#full-preview').removeClass('active'); }
-        lucide.createIcons();
     }
 
     function handleExport() {
@@ -292,18 +320,6 @@
         const element = document.getElementById('cv-paper');
         const opt = { margin: 0, filename: `${$('#project-name').val()}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 3, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
         html2pdf().set(opt).from(element).save();
-    }
-
-    function handleLogout() {
-        Swal.fire({
-            title: 'Se déconnecter ?',
-            text: "Vos modifications non sauvegardées seront perdues.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ef4444',
-            confirmButtonText: 'Oui, quitter',
-            cancelButtonText: 'Annuler'
-        }).then((result) => { if (result.isConfirmed) window.location.reload(); });
     }
 
     $(document).on('input', 'input, textarea, select', renderCV);
