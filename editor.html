@@ -142,7 +142,18 @@
     };
     let archives = JSON.parse(localStorage.getItem('cv_archives')) || [];
 
-    $(document).ready(() => { refreshArchivesUI(); renderAll(); lucide.createIcons(); });
+    $(document).ready(() => {
+        // Récupérer le template choisi depuis la page d'accueil
+        const chosenTemplate = localStorage.getItem('chosenTemplate');
+        if (chosenTemplate) {
+            $('#cv-template').val(chosenTemplate);
+            localStorage.removeItem('chosenTemplate'); // nettoyage
+        }
+
+        refreshArchivesUI();
+        renderAll();
+        lucide.createIcons();
+    });
 
     // --- VALIDATION G_S_R ---
     function validateForm() {
@@ -188,7 +199,7 @@
         return true;
     }
 
-    // --- LOGOUT ---
+    // --- LOGOUT corrigé : supprime l'utilisateur et redirige vers la connexion ---
     function handleLogout() {
         Swal.fire({
             title: 'Déconnexion ?',
@@ -201,8 +212,8 @@
             cancelButtonText: 'Annuler'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Redirection vers index.html avec l'ID de la section d'authentification
-                window.location.href = "index.html#auth-section";
+                localStorage.removeItem('user');               // Supprime l'utilisateur connecté
+                window.location.href = "index.html#auth-section"; // Redirection vers la connexion
             }
         });
     }
@@ -273,59 +284,102 @@
 
     function renderAll() { renderInputLists(); renderCV(); }
 
+    // --- SAUVEGARDE avec date ---
     function saveToArchives() {
         if (!validateForm()) return;
         const name = $('#project-name').val() || "CV_Temp";
-        const snap = { id: Date.now(), projectName: name, content: { ...currentData, ui: { name: $('#full-name').val(), job: $('#target-job').val(), email: $('#user-email').val(), phone: $('#user-phone').val(), bio: $('#user-bio').val(), skills: $('#user-skills').val(), tmpl: $('#cv-template').val(), color: $('#theme-color').val() } } };
-        archives.push(snap); localStorage.setItem('cv_archives', JSON.stringify(archives));
-        refreshArchivesUI(); Swal.fire('Sauvegardé', 'Projet ajouté aux archives.', 'success');
+        const snap = {
+            id: Date.now(),
+            projectName: name,
+            savedAt: new Date().toLocaleString('fr-FR'),      // Ajout de la date de sauvegarde
+            content: { ...currentData, ui: {
+                name: $('#full-name').val(),
+                job: $('#target-job').val(),
+                email: $('#user-email').val(),
+                phone: $('#user-phone').val(),
+                bio: $('#user-bio').val(),
+                skills: $('#user-skills').val(),
+                tmpl: $('#cv-template').val(),
+                color: $('#theme-color').val()
+            } }
+        };
+        archives.push(snap);
+        localStorage.setItem('cv_archives', JSON.stringify(archives));
+        refreshArchivesUI();
+        Swal.fire('Sauvegardé', 'Projet ajouté aux archives.', 'success');
     }
 
+    // --- AFFICHAGE des archives avec date ---
     function refreshArchivesUI() {
         const list = $('#archives-list').empty();
         archives.forEach(a => {
-            list.append(`<div class="archive-card">
-                <span class="text-[10px] font-black uppercase truncate w-32">${a.projectName}</span>
-                <div class="flex gap-2">
-                    <button onclick="loadArchive(${a.id})" class="text-purple-600"><i data-lucide="folder-open" class="w-4"></i></button>
-                    <button onclick="deleteArchive(${a.id})" class="text-red-400"><i data-lucide="trash" class="w-4"></i></button>
+            list.append(`
+                <div class="archive-card">
+                    <div class="flex flex-col w-32">
+                        <span class="text-[10px] font-black uppercase truncate">${a.projectName}</span>
+                        <span class="text-[8px] text-slate-400">${a.savedAt || 'Date inconnue'}</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="loadArchive(${a.id})" class="text-purple-600"><i data-lucide="folder-open" class="w-4"></i></button>
+                        <button onclick="deleteArchive(${a.id})" class="text-red-400"><i data-lucide="trash" class="w-4"></i></button>
+                    </div>
                 </div>
-            </div>`);
+            `);
         });
         lucide.createIcons();
     }
 
+    // --- CHARGEMENT d'une archive (restaure tout, y compris la photo) ---
     function loadArchive(id) {
         const a = archives.find(x => x.id === id);
-        currentData = { ...a.content };
+        currentData = { ...a.content };                     // Restaure les listes + photo
         $('#project-name').val(a.projectName);
-        $('#full-name').val(a.content.ui.name); $('#target-job').val(a.content.ui.job);
-        $('#user-email').val(a.content.ui.email); $('#user-phone').val(a.content.ui.phone);
-        $('#user-bio').val(a.content.ui.bio); $('#user-skills').val(a.content.ui.skills);
-        $('#cv-template').val(a.content.ui.tmpl); $('#theme-color').val(a.content.ui.color);
+        $('#full-name').val(a.content.ui.name);
+        $('#target-job').val(a.content.ui.job);
+        $('#user-email').val(a.content.ui.email);
+        $('#user-phone').val(a.content.ui.phone);
+        $('#user-bio').val(a.content.ui.bio);
+        $('#user-skills').val(a.content.ui.skills);
+        $('#cv-template').val(a.content.ui.tmpl);
+        $('#theme-color').val(a.content.ui.color);
         renderAll();
     }
 
-    function deleteArchive(id) { archives = archives.filter(x => x.id !== id); localStorage.setItem('cv_archives', JSON.stringify(archives)); refreshArchivesUI(); }
+    function deleteArchive(id) {
+        archives = archives.filter(x => x.id !== id);
+        localStorage.setItem('cv_archives', JSON.stringify(archives));
+        refreshArchivesUI();
+    }
 
     function toggleFullView() {
         if(!$('#full-preview').hasClass('active')) {
             $('#preview-target').html($('#cv-paper').clone().css({'transform': 'scale(1)', 'margin': '0 auto'}));
             $('#full-preview').addClass('active');
-        } else { $('#full-preview').removeClass('active'); }
+        } else {
+            $('#full-preview').removeClass('active');
+        }
     }
 
     function handleExport() {
         if (!validateForm()) return;
         const element = document.getElementById('cv-paper');
-        const opt = { margin: 0, filename: `${$('#project-name').val()}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 3, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+        const opt = {
+            margin: 0,
+            filename: `${$('#project-name').val()}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 3, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
         html2pdf().set(opt).from(element).save();
     }
 
     $(document).on('input', 'input, textarea, select', renderCV);
     $('#photo-file').on('change', function(e) {
         const reader = new FileReader();
-        reader.onload = (ev) => { currentData.photo = ev.target.result; renderCV(); };
+        reader.onload = (ev) => {
+            currentData.photo = ev.target.result;
+            renderCV();
+        };
         reader.readAsDataURL(e.target.files[0]);
     });
 </script>
