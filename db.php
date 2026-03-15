@@ -1,7 +1,6 @@
 <?php
-// Infos de connexion InfinityFree
 $host = "sql304.infinityfree.com";       // Serveur MySQL
-$db_name = "if0_41316843_cvgenpro";      // Remplace XXX par le nom réel de ta DB
+$db_name = "if0_41316843_cvgenpro";      
 $db_user = "if0_41316843";               // Nom d’utilisateur MySQL
 $db_pass = "Ghislain2009";               // Mot de passe MySQL
 

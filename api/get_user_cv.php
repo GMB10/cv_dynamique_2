@@ -1,5 +1,5 @@
 <?php
-session_start(); // Toujours démarrer la session
+session_start();
 require_once 'db.php';
 
 header('Content-Type: application/json');

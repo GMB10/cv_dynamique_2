@@ -1,5 +1,5 @@
 -- =============================================
--- Base de données CVGenPro (mise à jour)
+-- Base de données CVGenPro
 -- =============================================
 
 -- Table utilisateurs
